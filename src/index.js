@@ -4,21 +4,39 @@ const {
     Transform,
 } = require("stream");
 
+const alphabet = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l"]
+
+/**
+ * All possible config options/aliases
+ * @type {string[]}
+ */
 const configOptions = [
     "-c",
     "--config",
 ];
 
+/**
+ * All possible input file options/aliases
+ * @type {string[]}
+ */
 const inputOptions = [
     "-i",
     "--input",
 ];
 
+/**
+ * All possible output file options/aliases
+ * @type {string[]}
+ */
 const outputOptions = [
     "-o",
     "--output",
 ];
 
+/**
+ * Function for duplicates check in entered config
+ * @param configKeys: string[]
+ */
 const checkDuplicates = (configKeys) => {
     const configKeysCount = configKeys.reduce((acc, key) =>
         configOptions.includes(key)
@@ -29,56 +47,65 @@ const checkDuplicates = (configKeys) => {
     if (configKeysCount > 1) {
         process.stderr.write("Options duplicated\n");
 
-        process.kill(process.pid, 4);
+        process.exit(4);
     }
-}
+};
 
-function readUserInput() {
-    const readableStream = new Readable({
-        read(size) {
+/**
+ * Function only for reading user input from stdin
+ */
+const readUserInput = () => {
+    const stdin = process.stdin;
+    let input = "";
 
-        }
+    process.on('SIGINT', () => {
+        writeUserInput(input);
+
+        process.exit();
     });
 
-    readableStream.resume();
-    readableStream.setEncoding("utf8");
+    process.stdin.setEncoding("utf8");
+    process.stdin.resume();
 
-    let _input = "";
-
-    readableStream.on("data", (chunk) => {
-        readableStream.push(chunk);
-        _input += chunk;
+    stdin.on("data", (data) => {
+        input += Buffer.from(data).toString();
     });
 
-    readableStream.on("end", () => {
-        console.log(_input);
+    stdin.on("error", (error) => {
+        console.error(error);
     });
+};
 
-    readableStream.on("error", (error) => {
-        console.log(error.stack);
-    });
+/**
+ * Function only for printing encoded/decoded result of user input
+ * @param input: string, user input
+ */
+const writeUserInput = (input) => {
+    const stdout = process.stdout;
 
-    readableStream.pipe(writeStream());
+    process.stdout.write("\n");
 
-    return _input;
-}
+    stdout.write(input);
+};
 
-function writeStream() {
-    return new Writable({
-        write(chunk, encoding, callback) {
-            console.log("CHUNK", chunk);
-
-            callback();
-        },
-        destroy(error, callback) {
-            console.log("destroy", error, callback);
-
-            if (callback) {
-                callback();
-            }
-        }
-    });
-}
+// function writeStream() {
+//     return new Writable({
+//         write(chunk, encoding = "utf8", callback) {
+//             const converted = Buffer.from(chunk).toString();
+//
+//             console.log(converted);
+//
+//             callback();
+//         },
+//         destroy(error, callback) {
+//             console.log("destroy", error, callback);
+//
+//             if (callback) {
+//                 callback();
+//             }
+//         }
+//     });
+// }
 
 const App = () => {
     const correctArgs = process.argv.slice(2);
@@ -86,8 +113,7 @@ const App = () => {
     if (!correctArgs.some((arg) => configOptions.includes(arg))) {
         process.stderr.write("Invalid config received \n");
 
-        process.kill(process.pid, 4);
-
+        process.exit(4);
     } else {
         const configKeys = correctArgs.filter((option, index) => index % 2 === 0);
 
@@ -146,27 +172,6 @@ App();
 // clock();
 // renderer();
 
-// const net = require("net");
-// const server = net.createServer((connection) => {
-//     const readStr = new Readable();
-//
-//     readStr._read(10);
-//
-//     console.log("READ STR", readStr);
-//     console.log("client connected");
-//
-//     connection.on('end', () => {
-//         console.log("client disconnected");
-//     });
-//
-//     // connection.write("hello\r\n");
-//     // connection.pipe(connection);
-// });
-// // tcp, unix-socket
-// console.log("stdout", process.stdin);
-// server.listen(8010, "0.0.0.0", () => {console.log("started");});
-
-
 // todo writable stream example
 // const { PassThrough, Writable } = require('stream');
 // const pass = new PassThrough();
@@ -179,40 +184,3 @@ App();
 // pass.on('data', (chunk) => { console.log(chunk.toString()); });
 // pass.write('ok');  // Will not emit 'data'.
 // pass.resume();     // Must be called to make stream emit 'data'.
-
-// const http = require('http');
-//
-// const server = http.createServer((req, res) => {
-//     console.log("start");
-//     // `req` is an http.IncomingMessage, which is a readable stream.
-//     // `res` is an http.ServerResponse, which is a writable stream.
-//
-//     let body = '';
-//
-//     console.log("body", body);
-//     // Get the data as utf8 strings.
-//     // If an encoding is not set, Buffer objects will be received.
-//     req.setEncoding('utf8');
-//
-//     // Readable streams emit 'data' events once a listener is added.
-//     req.on('data', (chunk) => {
-//         console.log(req, res, chunk);
-//         body += chunk;
-//     });
-//
-//     // The 'end' event indicates that the entire body has been received.
-//     req.on('end', () => {
-//         try {
-//             const data = JSON.parse(body);
-//             // Write back something interesting to the user:
-//             res.write(typeof data);
-//             res.end();
-//         } catch (er) {
-//             // uh oh! bad json!
-//             res.statusCode = 400;
-//             return res.end(`error: ${er.message}`);
-//         }
-//     });
-// });
-//
-// server.listen(1337);

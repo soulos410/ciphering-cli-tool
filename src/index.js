@@ -4,7 +4,21 @@ const {
     Transform,
 } = require("stream");
 
-const alphabet = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l"]
+/**
+ * Lowercase letters of English alphabet
+ * @type {string[]}
+ */
+const alphabet = [
+    "a", "b", "c",
+    "d", "e", "f",
+    "g", "h", "i",
+    "j", "k", "l",
+    "m", "n", "o",
+    "p", "q", "r",
+    "s", "t", "u",
+    "v", "w", "x",
+    "y", "z",
+];
 
 /**
  * All possible config options/aliases
@@ -52,33 +66,77 @@ const checkDuplicates = (configKeys) => {
 };
 
 /**
+ * Transform stream for stdin input transform
+ */
+class TransformByConfig extends Transform {
+    constructor(config) {
+        super();
+
+        console.log("config", config);
+        this.config = config;
+    }
+
+    push(chunk, encoding) {
+        return super.push(chunk, encoding);
+    }
+
+    _transform(chunk, encoding, callback) {
+        this.push(Buffer.from(chunk).toString());
+
+        callback();
+    }
+}
+
+/**
+ * Writable stream for stdin input handling
+ */
+class WritableStream extends Writable {
+    #input = "";
+
+    _write(chunk, encoding, callback) {
+        this.#input += Buffer.from(chunk).toString();
+        // console.log("this input", this.#input);
+        return false;
+    }
+
+    end(cb) {
+        console.log("end?");
+        super.end(cb);
+    }
+
+    _final(callback) {
+        process.stdout.write(this.#input);
+        this.end();
+    }
+}
+
+/**
  * Function only for reading user input from stdin
  */
-const readUserInput = () => {
+const readUserInput = (optionsMap) => {
     const stdin = process.stdin;
-    let input = "";
-
-    process.on('SIGINT', () => {
-        writeUserInput(input);
-
-        process.exit();
-    });
+    const userConfigList = Object.entries(optionsMap).find(([optionKey]) =>
+        configOptions.includes(optionKey)
+    )[1].split("-");
 
     process.stdin.setEncoding("utf8");
     process.stdin.resume();
 
-    stdin.on("data", (data) => {
-        input += Buffer.from(data).toString();
-    });
-
     stdin.on("error", (error) => {
+        // todo process.stderr?
         console.error(error);
     });
+
+    const transformStream = new TransformByConfig(userConfigList);
+    const writableStream = new WritableStream();
+
+    process.stdin.pipe(transformStream).pipe(writableStream);
 };
 
 /**
  * Function only for printing encoded/decoded result of user input
  * @param input: string, user input
+ * @deprecated
  */
 const writeUserInput = (input) => {
     const stdout = process.stdout;
@@ -87,25 +145,6 @@ const writeUserInput = (input) => {
 
     stdout.write(input);
 };
-
-// function writeStream() {
-//     return new Writable({
-//         write(chunk, encoding = "utf8", callback) {
-//             const converted = Buffer.from(chunk).toString();
-//
-//             console.log(converted);
-//
-//             callback();
-//         },
-//         destroy(error, callback) {
-//             console.log("destroy", error, callback);
-//
-//             if (callback) {
-//                 callback();
-//             }
-//         }
-//     });
-// }
 
 const App = () => {
     const correctArgs = process.argv.slice(2);
@@ -129,58 +168,9 @@ const App = () => {
         if (configKeys.some((key) => inputOptions.includes(key))) {
             console.log("input file received");
         } else {
-           readUserInput();
+           readUserInput(configOptionsMap);
         }
     }
 };
 
 App();
-
-// const counterReader = new CounterReader({ highWaterMark: 2 });
-// const counterWriter = new CounterWriter({ highWaterMark: 2 });
-// const counterTransform = new CounterTransform({ highWaterMark: 2 });
-//
-// counterReader.pipe(counterTransform).pipe(counterWriter);
-
-// const readableStream = new Readable({
-//     read() {}
-// })
-// const writableStream = new Writable()
-//
-// writableStream._write = (chunk, encoding, next) => {
-//     console.log(chunk.toString())
-//     next()
-// }
-//
-// readableStream.pipe(writableStream)
-//
-// readableStream.push('hi!')
-// readableStream.push('ho!')
-
-
-
-// function renderer () {
-//     return new Writable({
-//         objectMode: true,
-//         write: (data, _, done) => {
-//             console.log('<-', data)
-//             done()
-//         }
-//     })
-// }
-//
-// clock();
-// renderer();
-
-// todo writable stream example
-// const { PassThrough, Writable } = require('stream');
-// const pass = new PassThrough();
-// const writable = new Writable();
-//
-// pass.pipe(writable);
-// pass.unpipe(writable);
-// // readableFlowing is now false.
-//
-// pass.on('data', (chunk) => { console.log(chunk.toString()); });
-// pass.write('ok');  // Will not emit 'data'.
-// pass.resume();     // Must be called to make stream emit 'data'.

@@ -66,13 +66,101 @@ const checkDuplicates = (configKeys) => {
 };
 
 /**
+ * Letter case check function
+ * @param letter: string
+ * @return boolean
+ */
+const isLowercaseLetter = (letter) =>
+    letter.toLowerCase() === letter;
+
+const transformByAtbash = (inputString) => {
+    const alphabetLength = alphabet.length;
+
+    return inputString
+        .split("")
+        .map((letter) => {
+          if(!alphabet.includes(letter.toLowerCase())) {
+            return letter;
+          }
+
+          return isLowercaseLetter(letter)
+            ? alphabet[alphabetLength - (alphabet.indexOf(letter) + 1)]
+            : alphabet[alphabetLength - (alphabet.indexOf(letter.toLowerCase()) + 1)].toUpperCase()
+          }
+        )
+        .join("");
+}
+
+/**
+ * Caesar cypher transform function
+ * @param isEncode: boolean
+ * @param inputString: string
+ * @param shift: number
+ * @return string
+ */
+const transformByCaesar = (isEncode, inputString, shift) => {
+    const alphabetLength = alphabet.length;
+
+    if (isEncode) {
+        return inputString
+            .split("")
+            .map((letter) => {
+                 if(!alphabet.includes(letter.toLowerCase())) {
+                     return letter;
+                 }
+
+                 // todo trouble with "z" letter. alphabet[(alphabet.indexOf("z")] is 25,  25 + shift = 26. alphabet[26] undefined. need to add check -> alphabet[(alphabet.indexOf("z") + 1) % 26]
+                 // return isLowercaseLetter(letter)
+                 //     ? alphabet[(alphabet.indexOf(letter) + shift) % alphabetLength]
+                 //     : alphabet[(alphabet.indexOf(letter.toLowerCase()) + shift) % alphabetLength]
+                 //         .toUpperCase()
+                }
+            )
+            .join("")
+    } else {
+        return inputString
+            .split("")
+            .map((letter) => {
+              if (!alphabet.includes(letter.toLowerCase())) {
+                return letter;
+              }
+              return isLowercaseLetter(letter)
+                ? alphabet[(alphabet.indexOf(letter) - shift) % alphabetLength]
+                : alphabet[(alphabet.indexOf(letter.toLowerCase()) - shift) % alphabetLength]
+                  .toUpperCase()
+              }
+            )
+            .join("")
+    }
+};
+
+/**
+ * type AlgorithmType = "C" | "R" | "A"
+ * @param currentConfig: Array<{ {X: AlgorithmType, Y: 1 | 0} }>
+ * @param inputString: string
+ * @return string
+ */
+const getAlgorithmToTransform = (currentConfig, inputString) => {
+    switch (currentConfig[0]) {
+        case "C": {
+            return transformByCaesar(!!parseInt(currentConfig[1], 10), inputString, 1);
+        }
+        case "A": {
+            return transformByAtbash(inputString);
+        }
+        case "R": {
+            return transformByCaesar(!!parseInt(currentConfig[1], 10), inputString, 8);
+        }
+    }
+}
+
+/**
  * Transform stream for stdin input transform
  */
 class TransformByConfig extends Transform {
     constructor(config) {
         super();
 
-        console.log("config", config);
         this.config = config;
     }
 
@@ -81,7 +169,16 @@ class TransformByConfig extends Transform {
     }
 
     _transform(chunk, encoding, callback) {
-        this.push(Buffer.from(chunk).toString());
+        let result = Buffer.from(chunk).toString().trim();
+
+        this.config.forEach((config) => {
+            result = getAlgorithmToTransform(config, result);
+
+            console.log("result", result);
+            }
+        );
+
+        this.push(result);
 
         callback();
     }
@@ -95,18 +192,15 @@ class WritableStream extends Writable {
 
     _write(chunk, encoding, callback) {
         this.#input += Buffer.from(chunk).toString();
-        // console.log("this input", this.#input);
-        return false;
-    }
 
-    end(cb) {
-        console.log("end?");
-        super.end(cb);
+        // todo if callback is not called, returned value is first input string, is it correct behaviour
+        callback();
     }
 
     _final(callback) {
-        process.stdout.write(this.#input);
-        this.end();
+        process.stdout.write(`\n${this.#input}\n`);
+
+        process.exit(0);
     }
 }
 
@@ -129,6 +223,10 @@ const readUserInput = (optionsMap) => {
 
     const transformStream = new TransformByConfig(userConfigList);
     const writableStream = new WritableStream();
+
+    process.on("SIGINT", () => {
+        writableStream._final();
+    });
 
     process.stdin.pipe(transformStream).pipe(writableStream);
 };

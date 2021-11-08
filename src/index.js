@@ -14,6 +14,7 @@ const App = () => {
 
     process.exit(1);
   }
+  // todo add config case check (c !== C, a !== A, r !== R)
   const configKeys = correctArgs.filter((option, index) => index % 2 === 0);
 
   checkDuplicates(configKeys);

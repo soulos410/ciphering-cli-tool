@@ -17,7 +17,7 @@ class OutputStream extends Writable {
     }
 
     _final(callback) {
-        process.stdout.write(`\n${this.input}\n`);
+        process.stdout.write(this.input);
 
         process.exit(0);
     }

@@ -8,21 +8,21 @@ const { isLowercaseLetter } = require("../../utils/isLowerCase");
  * @returns {string}
  */
 const transformByAtbash = (inputString) => {
-    const alphabetLength = alphabet.length;
+  const alphabetLength = alphabet.length;
 
-    return inputString
-        .split("")
-        .map((letter) => {
-                if(!alphabet.includes(letter.toLowerCase())) {
-                    return letter;
-                }
+  return inputString
+    .split("")
+    .map((letter) => {
+        if (!alphabet.includes(letter.toLowerCase())) {
+          return letter;
+        }
 
-                return isLowercaseLetter(letter)
-                    ? alphabet[alphabetLength - (alphabet.indexOf(letter) + 1)]
-                    : alphabet[alphabetLength - (alphabet.indexOf(letter.toLowerCase()) + 1)].toUpperCase()
-            }
-        )
-        .join("");
+        return isLowercaseLetter(letter)
+          ? alphabet[alphabetLength - (alphabet.indexOf(letter) + 1)]
+          : alphabet[alphabetLength - (alphabet.indexOf(letter.toLowerCase()) + 1)].toUpperCase()
+      }
+    )
+    .join("");
 };
 
 /**
@@ -30,17 +30,15 @@ const transformByAtbash = (inputString) => {
  */
 class AtbashTransform extends Transform {
 
-    push(chunk, encoding) {
-        return super.push(chunk, encoding);
-    }
+  _transform(chunk, encoding, callback) {
+    const chunkString = chunk.toString();
 
-    _transform(chunk, encoding, callback) {
-        const chunkString = chunk.toString();
+    const transformedString = transformByAtbash(chunkString);
 
-        const transformedString = transformByAtbash(chunkString);
+    this.push(transformedString);
 
-        this.push(transformedString);
-    }
+    callback();
+  }
 }
 
-module.exports = { transformByAtbash, AtbashTransform };
+module.exports = { AtbashTransform};

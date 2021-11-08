@@ -5,9 +5,8 @@
  */
 const createTransformStream = (transformList, readStream) =>
     transformList.reduce((acc, transform) => {
-    acc.pipe(transform);
 
-    return acc;
+    return acc.pipe(transform);
 }, readStream);
 
 module.exports = { createTransformStream };

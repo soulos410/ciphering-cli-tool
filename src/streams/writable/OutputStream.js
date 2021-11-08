@@ -1,19 +1,23 @@
-const {Writable} = require("stream");
+const { Writable } = require("stream");
 
 /**
  * Writable stream for stdin input handling
  */
 class OutputStream extends Writable {
-    #input = "";
+    constructor() {
+        super();
+
+        this.input = "";
+    }
 
     _write(chunk, encoding, callback) {
-        this.#input += Buffer.from(chunk).toString();
+        this.input += chunk.toString();
 
         callback();
     }
 
     _final(callback) {
-        process.stdout.write(`\n${this.#input}\n`);
+        process.stdout.write(`\n${this.input}\n`);
 
         process.exit(0);
     }

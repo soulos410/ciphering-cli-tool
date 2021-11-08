@@ -1,4 +1,4 @@
-const { createWriteStream } = require("fs");
+const fs = require("fs");
 
 /**
  * Helper function for file writable stream creation
@@ -7,15 +7,15 @@ const { createWriteStream } = require("fs");
  * @returns {WriteStream}
  */
 const createFileWritableStream = (pathToFile, options) => {
-    const fileWritableStream = createWriteStream(pathToFile, options);
-
-    fileWritableStream.on("error", () => {
+    try {
+        fs.accessSync(pathToFile);
+    } catch(e) {
         process.stderr.write("Error: Can't get access to output file");
 
         process.exit(1);
-    });
+    }
 
-    return fileWritableStream;
+    return fs.createWriteStream(pathToFile, options);
 };
 
 module.exports = {createFileWritableStream};

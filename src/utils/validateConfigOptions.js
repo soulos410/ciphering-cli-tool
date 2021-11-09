@@ -1,4 +1,6 @@
 const {customErrorsHandler} = require("./customErrorsHandler");
+const {CustomError} = require("../errors/CustomError");
+
 const validateConfigOptions = (configOptionsMap) => {
   try {
   const hasInvalidConfig = configOptionsMap.config.split("-").some(([option]) => option.toUpperCase() !== option);

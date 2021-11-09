@@ -5,6 +5,7 @@ const {OutputStream} = require("./streams/writable/OutputStream");
 const {createFileReadableStream} = require("./streams/readable/createFileReadableStream");
 const {createFileWritableStream} = require("./streams/writable/FileWritableStream");
 const {createTransformStream} = require("./utils/createTransformStream");
+const {validateConfigOptions} = require("./utils/validateConfigOptions");
 
 const App = () => {
   const correctArgs = process.argv.slice(2);
@@ -14,7 +15,7 @@ const App = () => {
 
     process.exit(1);
   }
-  // todo add config case check (c !== C, a !== A, r !== R)
+
   const configKeys = correctArgs.filter((option, index) => index % 2 === 0);
 
   checkDuplicates(configKeys);
@@ -31,6 +32,8 @@ const App = () => {
       [key]: configValues[index],
     });
   }, {});
+
+  validateConfigOptions(configOptionsMap);
 
   const transformsList = getTransformStreamsList(configOptionsMap.config);
 

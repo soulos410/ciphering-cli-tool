@@ -4,7 +4,6 @@ class CustomError extends Error {
 
     this.message = message;
     this.errorName = errorName;
-    this.isSystemError = false;
   }
 }
 

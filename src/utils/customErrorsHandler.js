@@ -1,12 +1,12 @@
+const {CustomError} = require("../errors/CustomError");
 const customErrorsHandler = (error) => {
-  const { systemError } = error;
 
-  if (systemError) {
-    throw error;
-  } else {
+  if (error instanceof CustomError) {
     process.stderr.write(`${error.errorName}: ${error.message}`);
 
     process.exit(1);
+  } else {
+    throw error;
   }
 };
 

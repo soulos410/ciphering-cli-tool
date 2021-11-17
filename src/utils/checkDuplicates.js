@@ -1,5 +1,4 @@
 const {configOptions} = require("../constants");
-const {customErrorsHandler} = require("./customErrorsHandler");
 const {CustomError} = require("../errors/CustomError");
 
 /**
@@ -13,12 +12,8 @@ const checkDuplicates = (configKeys) => {
             : acc, 0
     );
 
-    try {
-        if (configKeysCount > 1) {
-            throw new CustomError("Options duplicated\n", "DuplicatedOptionsError");
-        }
-    } catch(e) {
-        customErrorsHandler(e);
+    if (configKeysCount > 1) {
+        throw new CustomError("Options duplicated\n", "DuplicatedOptionsError");
     }
 };
 

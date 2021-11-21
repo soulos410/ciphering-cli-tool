@@ -1,4 +1,5 @@
 const { createReadStream } = require("fs");
+const {CustomError} = require("../../errors/CustomError");
 
 /**
  * Helper function for file readable stream creating
@@ -6,16 +7,24 @@ const { createReadStream } = require("fs");
  * @param options: BufferEncoding | ReadStreamOptions
  * @returns ReadStream
  */
-const createFileReadableStream = (pathToFile, options) => {
-    const readableStream = createReadStream(pathToFile, options);
+const createFileReadableStream = async (pathToFile, options) => {
+    try {
+        const fileReadStream = createReadStream(pathToFile, options);
 
-    readableStream.on("error", () => {
-        process.stderr.write("Error: Can't get access to input file");
+        await new Promise((resolve, reject) => {
+            fileReadStream.on("open", () =>
+                resolve()
+            );
 
-        process.exit(1);
-    });
+            fileReadStream.on("error", (e) =>
+                reject(e)
+            );
+        });
 
-    return readableStream;
+        return fileReadStream;
+    } catch(e) {
+        throw new CustomError("Cannot get access to input file", "InvalidInputError");
+    }
 };
 
 module.exports = { createFileReadableStream };

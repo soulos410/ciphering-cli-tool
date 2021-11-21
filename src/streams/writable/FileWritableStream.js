@@ -1,4 +1,5 @@
 const fs = require("fs");
+const {CustomError} = require("../../errors/CustomError");
 
 /**
  * Helper function for file writable stream creation
@@ -6,28 +7,26 @@ const fs = require("fs");
  * @param options: BufferEncoding | StreamOptions
  * @returns {WriteStream}
  */
-const createFileWritableStream = (pathToFile, options) => {
+const createFileWritableStream = async (pathToFile, options) => {
     try {
 
         fs.accessSync(pathToFile);
 
         const fileWriteStream =  fs.createWriteStream(pathToFile, options);
 
-        fileWriteStream.on("close", () => {
-            fs.appendFile(pathToFile, " ", (err => {
-                if (err) {
-                    console.error(err);
+        await new Promise((resolve, reject) => {
+            fileWriteStream.on("error", (e) =>
+                reject(e)
+            );
 
-                    process.exit(1);
-                }
-            }));
-        })
+            fileWriteStream.on("open", () => {
+                resolve();
+            });
+        });
 
         return fileWriteStream;
     } catch(e) {
-        process.stderr.write("Error: Can't get access to output file \n");
-
-        process.exit(1);
+        throw new CustomError("Cannot get access to output file", "InvalidOutputError");
     }
 };
 

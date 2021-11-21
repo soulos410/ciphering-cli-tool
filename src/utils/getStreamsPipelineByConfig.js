@@ -3,20 +3,20 @@ const {createFileWritableStream} = require("../streams/writable/FileWritableStre
 const {OutputStream} = require("../streams/writable/OutputStream");
 const {getTransformStreamsList} = require("../utils/getTransformSteamsList");
 
-const getStreamsPipelineByConfig = (configOptionsMap) => {
+const getStreamsPipelineByConfig = async (configOptionsMap) => {
   let inputStream;
   let outputStream;
 
   const transformsList = getTransformStreamsList(configOptionsMap.config);
 
   if (configOptionsMap.input) {
-    inputStream = createFileReadableStream(configOptionsMap.input, "utf8");
+    inputStream = await createFileReadableStream(configOptionsMap.input, "utf8");
   } else {
     inputStream = process.stdin;
   }
 
   if (configOptionsMap.output) {
-    outputStream = createFileWritableStream(configOptionsMap.output, {encoding: "utf8", flags: "as"});
+    outputStream = await createFileWritableStream(configOptionsMap.output, {encoding: "utf8", flags: "as"});
   } else {
     outputStream = new OutputStream();
 

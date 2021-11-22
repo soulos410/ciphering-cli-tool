@@ -2,6 +2,10 @@ Ciphering CLI Tool
 
 To start application you should enter node src/index.js ${your pattern} in command line.
 
+To run tests you should install `jest` with npm i and then enter `jest` in project folder.
+
+To check tests coverage you should enter `jest --coverage`
+
 Valid input arguments:
 
     Required
